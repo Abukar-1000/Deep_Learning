@@ -3,6 +3,35 @@ from torch import Tensor, nn, optim, mean, zeros
 import numpy as np
 import matplotlib.pyplot as plt
 
+class IrisModel(nn.Module):
+
+    def __init__(self, units: int, layers: int, inputFeatures: int, outputFeatures: int) -> None:
+        super().__init__()
+        self.modelLayers = nn.ModuleDict()
+        self.units = units
+        self.layers = layers
+        self.inputFeatures = inputFeatures
+        self.outputFeatures = outputFeatures
+        self.__createModel()
+
+    def __createModel(self) -> None:
+        self.modelLayers["input"] = nn.Linear(self.inputFeatures, self.units)
+
+        for x in range(self.layers):
+            self.modelLayers[f"layer{x}"] = nn.Linear(self.units, self.units)
+        
+        self.modelLayers["output"] = nn.Linear(self.units, self.outputFeatures)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = nn.functional.relu(self.modelLayers["input"](x))
+
+        for layer in range(self.layers):
+            x = nn.functional.relu(self.modelLayers[f"layer{layer}"](x))
+
+        x = self.modelLayers["output"](x)
+
+        return x
+
 class SepalDataEnum:
     setosa: int = 0
     versiColor: int = 1
@@ -28,13 +57,18 @@ testSpecies[testSpeciesLabels['species'] == 'Iris-setosa'] = SepalDataEnum.setos
 testSpecies[testSpeciesLabels['species'] == 'Iris-versicolor'] = SepalDataEnum.versiColor
 testSpecies[testSpeciesLabels['species'] == 'Iris-virginica'] = SepalDataEnum.virginica
 
+"""
 model = nn.Sequential(
     nn.Linear(4, 104),
-    nn.ReLU(),
+    nn.functional.relu(),
     nn.Linear(104, 104),
-    nn.ReLU(),
+    nn.functional.relu(),
     nn.Linear(104, 3)
 )
+
+"""
+
+model = IrisModel(104, 4, 4, 3)
 
 optimizer = optim.SGD(model.parameters(), lr=0.1)
 lossFunc = nn.CrossEntropyLoss()
